@@ -1,0 +1,379 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+define("@scom/scom-multi-select-filter/store/interface.ts", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("@scom/scom-multi-select-filter/store/index.ts", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.collaspeStyle = void 0;
+    const Theme = components_1.Styles.Theme.ThemeVars;
+    const labelStyle = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        gap: 8,
+        flexDirection: 'row-reverse',
+        padding: '0.35rem 1rem'
+    };
+    exports.collaspeStyle = components_1.Styles.style({
+        $nest: {
+            'i-icon.rotate-icon': {
+                transform: 'rotate(-180deg)',
+                transition: 'transform .2s ease'
+            },
+            'label.i-checkbox': labelStyle,
+            'label.i-radio': labelStyle,
+            'label.i-checkbox:hover': {
+                background: Theme.action.hover
+            },
+            'label.i-radio:hover': {
+                background: Theme.action.hover
+            },
+            '.filter-collapse:hover': {
+                background: Theme.action.hover
+            },
+            'i-checkbox': {
+                borderRadius: 5,
+                overflow: 'hidden'
+            },
+            'i-radio': {
+                borderRadius: 5,
+                overflow: 'hidden'
+            },
+            '.i-checkbox_label': {
+                padding: 0
+            },
+            '.subcheckbox:not(.is-checked) .i-checkbox_label': {
+                color: Theme.text.secondary
+            },
+            'i-checkbox .checkmark': {
+                width: 24,
+                height: 24,
+                borderRadius: 4
+            },
+            'i-checkbox .checkmark:after': {
+                top: 2,
+                height: 12.5,
+                width: 5.8
+            },
+            'i-radio-group': {
+                flexDirection: 'column',
+                gap: '0.5rem'
+            },
+            'i-radio input[type="radio"]': {
+                width: 20,
+                height: 20,
+                margin: 2
+            },
+            '.radio-custom input': {
+                width: '100% !important',
+                padding: '0.25rem 0.75rem 0.25rem 0.75rem'
+            },
+        }
+    });
+});
+define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/components", "@scom/scom-multi-select-filter/index.css.ts"], function (require, exports, components_2, index_css_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const Theme = components_2.Styles.Theme.ThemeVars;
+    let ScomMultiSelectFilter = class ScomMultiSelectFilter extends components_2.Module {
+        constructor(parent, options) {
+            super(parent, options);
+            this._filter = {};
+            this.updateFilters = () => {
+                [...this.radioGroupMapper.keys()].forEach(_k => {
+                    var _a;
+                    const arr = _k.split(',');
+                    const radioGroup = this.radioGroupMapper.get(_k);
+                    if (this._filter[arr[0]] || this._filter[arr[1]]) {
+                        radioGroup.selectedValue = ((_a = radioGroup.tag) !== null && _a !== void 0 ? _a : []).findIndex((opt) => {
+                            var _a, _b, _c, _d;
+                            const key0Value = arr[0] ? (_a = this._filter[arr[0]]) === null || _a === void 0 ? void 0 : _a[0] : undefined;
+                            const key1Value = arr[1] ? (_b = this._filter[arr[1]]) === null || _b === void 0 ? void 0 : _b[0] : undefined;
+                            return key0Value === ((_c = opt.value) === null || _c === void 0 ? void 0 : _c[0]) && key1Value === ((_d = opt.value) === null || _d === void 0 ? void 0 : _d[1]);
+                        }).toString();
+                    }
+                    else {
+                        radioGroup.selectedValue = '';
+                    }
+                    if (this.customInputMapper.has(_k)) {
+                        const inputs = this.customInputMapper.get(_k);
+                        inputs.forEach((input, idx) => { var _a, _b; return input.value = arr[idx] ? (_b = (_a = this._filter[arr[idx]]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : '' : ''; });
+                    }
+                });
+                this.checkboxesMapper.forEach((checkbox, key) => {
+                    const arr = key.split('|');
+                    const value = this._filter[arr[0]];
+                    checkbox.checked = value && (value.includes(arr[1]) || value.includes(arr[2]));
+                });
+            };
+            this.renderFilters = () => {
+                if (!this.pnlFilter)
+                    return;
+                this.pnlFilter.clearInnerHTML();
+                this.checkboxesMapper = new Map();
+                this.radioGroupMapper = new Map();
+                this.customInputMapper = new Map();
+                this._data.forEach((data) => {
+                    const filters = data.type === 'checkbox' ?
+                        this.renderCheckboxFilters(data) : this.renderRadioFilters(data);
+                    const icon = (this.$render("i-icon", { width: 24, height: 24, class: data.expanded ? 'rotate-icon' : '', name: "chevron-down", fill: Theme.text.primary, padding: { top: 6, bottom: 6, left: 6, right: 6 } }));
+                    this.pnlFilter.append(this.$render("i-panel", { class: index_css_1.collaspeStyle },
+                        this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: "space-between", padding: { top: '0.5rem', right: '1rem', bottom: '0.5rem', left: '1rem' }, border: { radius: 5 }, gap: "8px", class: "pointer filter-collapse", onClick: () => this.toggle(filters, icon) },
+                            this.$render("i-label", { font: { bold: true }, caption: data.name }),
+                            icon),
+                        filters));
+                });
+            };
+            this.renderRadioFilters = (data) => {
+                const options = data.options;
+                const radioGroup = this.renderRadios(data.key, options, data.custom);
+                const customFields = data.custom ? this.renderCustomFields(data, radioGroup) : [];
+                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.divider } }, gap: "0.75rem" },
+                    radioGroup,
+                    customFields));
+            };
+            this.applyCustomRadio = (keys, inputs) => {
+                let hasValue;
+                const inputValue = inputs.map(input => {
+                    if (input.value)
+                        hasValue = true;
+                    return input.value;
+                });
+                if (!hasValue)
+                    return;
+                keys.forEach((_k, i) => {
+                    if (inputValue === null || inputValue === void 0 ? void 0 : inputValue[i])
+                        this._filter[_k] = [inputValue[i]];
+                    else
+                        delete this._filter[_k];
+                });
+                if (this.onFilterChanged)
+                    this.onFilterChanged(this._filter);
+            };
+            this.onRadioChanged = (target, keys, options) => {
+                if (target.selectedValue === '')
+                    return;
+                const option = options[target.selectedValue];
+                if (option.isAll) {
+                    keys.forEach(_k => {
+                        if (this._filter[_k])
+                            delete this._filter[_k];
+                    });
+                }
+                else {
+                    keys.forEach((_k, i) => {
+                        var _a;
+                        if ((_a = option.value) === null || _a === void 0 ? void 0 : _a[i])
+                            this._filter[_k] = [option.value[i]];
+                        else
+                            delete this._filter[_k];
+                    });
+                }
+                if (this.onFilterChanged)
+                    this.onFilterChanged(this._filter);
+            };
+            this.renderCheckboxFilters = (data) => {
+                const options = data.options;
+                const checkboxes = this.renderCheckboxes(data.key, options, true);
+                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.divider } }, gap: "1.25rem" }, checkboxes));
+            };
+            this._updateSubFilter = (filterKey, options, selectAll, curValue) => {
+                if (options) {
+                    if (selectAll && options.length <= 1)
+                        return;
+                    options.forEach(opt => {
+                        if (selectAll) {
+                            const idx = this._filter[filterKey].indexOf(opt.value);
+                            if (idx >= 0) {
+                                this._filter[filterKey].splice(idx, 1);
+                            }
+                        }
+                        else {
+                            if (curValue === opt.value)
+                                return;
+                            this._filter[filterKey].push(opt.value);
+                        }
+                    });
+                }
+            };
+            this.onSelectAll = (filterKey, checkboxKey, option, checked) => {
+                const keys = [...this.checkboxesMapper.keys()].filter(k => k !== checkboxKey && k.startsWith(checkboxKey));
+                keys.forEach(_k => {
+                    if (!this.checkboxesMapper.has(_k))
+                        return;
+                    this.checkboxesMapper.get(_k).checked = checked;
+                });
+                if (!this._filter[filterKey])
+                    this._filter[filterKey] = [];
+                const index = this._filter[filterKey].indexOf(option.value);
+                if (checked && index == -1) {
+                    this._filter[filterKey].push(option.value);
+                    this._updateSubFilter(filterKey, option.subCheckbox, true);
+                }
+                else if (!checked && index >= 0) {
+                    this._filter[filterKey].splice(index, 1);
+                }
+                if (this.onFilterChanged)
+                    this.onFilterChanged(this._filter);
+            };
+            this.onSelectCheckbox = (filterKey, parentKey, curOption, options, checked) => {
+                if (!this._filter[filterKey])
+                    this._filter[filterKey] = [];
+                const parentIndex = this._filter[filterKey].indexOf(parentKey);
+                const _mapKey = `${filterKey}|${parentKey}`;
+                const index = this._filter[filterKey].indexOf(curOption.value);
+                const keys = [...this.checkboxesMapper.keys()].filter(k => k !== _mapKey && k.startsWith(_mapKey));
+                if (checked) {
+                    const isAllChecked = keys.every(_k => this.checkboxesMapper.get(_k).checked);
+                    if (isAllChecked) {
+                        if (this.checkboxesMapper.has(_mapKey)) {
+                            this.checkboxesMapper.get(_mapKey).checked = true;
+                        }
+                        this._filter[filterKey].push(parentKey);
+                        this._updateSubFilter(filterKey, options, true);
+                    }
+                    else if (index == -1) {
+                        this._filter[filterKey].push(curOption.value);
+                    }
+                }
+                else {
+                    if (index >= 0) {
+                        this._filter[filterKey].splice(index, 1);
+                    }
+                    if (parentIndex >= 0) {
+                        this._filter[filterKey].splice(parentIndex, 1);
+                    }
+                    if (this.checkboxesMapper.has(_mapKey)) {
+                        if (this.checkboxesMapper.get(_mapKey).checked) {
+                            this._updateSubFilter(filterKey, options, false, curOption.value);
+                        }
+                        this.checkboxesMapper.get(_mapKey).checked = false;
+                    }
+                }
+                if (this.onFilterChanged)
+                    this.onFilterChanged(this._filter);
+            };
+        }
+        get filter() {
+            return this._filter;
+        }
+        set filter(data) {
+            this._filter = data;
+            this.updateFilters();
+        }
+        set data(data) {
+            this._data = data;
+            this.renderFilters();
+        }
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
+        toggle(container, icon) {
+            container.visible = !container.visible;
+            icon.classList.toggle('rotate-icon');
+        }
+        renderCustomFields(data, radioGroup) {
+            const inputs = data.key.map((_k, idx) => {
+                var _a, _b, _c, _d;
+                return (this.$render("i-input", { width: "100%", height: 40, border: { radius: 8 }, placeholder: (_b = (_a = data.custom.placeholder) === null || _a === void 0 ? void 0 : _a[idx]) !== null && _b !== void 0 ? _b : '', inputType: data.custom.type, value: radioGroup.selectedValue == '' ? (_d = (_c = this._filter[_k]) === null || _c === void 0 ? void 0 : _c[0]) !== null && _d !== void 0 ? _d : '' : '', onFocus: () => {
+                        if (radioGroup.selectedValue != '')
+                            radioGroup.selectedValue = '';
+                    } }));
+            });
+            this.customInputMapper.set(data.key.toString(), inputs);
+            let controls = [...inputs];
+            if (controls.length > 1) {
+                controls.splice(1, 0, this.$render("i-label", { caption: "to" }));
+            }
+            return (this.$render("i-vstack", { class: "radio-custom", gap: "0.75rem", padding: { left: '1rem', right: '1rem' } },
+                this.$render("i-hstack", { gap: "0.5rem", verticalAlignment: "center" }, controls),
+                this.$render("i-button", { width: "100%", caption: "Apply", font: { color: Theme.colors.primary.contrastText }, padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, onClick: () => {
+                        if (radioGroup.selectedValue === '')
+                            this.applyCustomRadio(data.key, inputs);
+                    } })));
+        }
+        renderRadios(keys, options, custom) {
+            let selectedValue = '';
+            const items = options.map((opt, idx) => {
+                var _a, _b, _c, _d;
+                const key0Value = keys[0] ? (_a = this._filter[keys[0]]) === null || _a === void 0 ? void 0 : _a[0] : undefined;
+                const key1Value = keys[1] ? (_b = this._filter[keys[1]]) === null || _b === void 0 ? void 0 : _b[0] : undefined;
+                if (key0Value === ((_c = opt.value) === null || _c === void 0 ? void 0 : _c[0]) && key1Value === ((_d = opt.value) === null || _d === void 0 ? void 0 : _d[1])) {
+                    selectedValue = idx.toString();
+                }
+                return {
+                    caption: opt.label,
+                    value: idx.toString(),
+                    width: '100%',
+                    height: 'auto',
+                    captionWidth: 'auto'
+                };
+            });
+            if (custom)
+                items.push({
+                    caption: 'Custom',
+                    value: '',
+                    width: '100%',
+                    height: 'auto',
+                    captionWidth: 'auto'
+                });
+            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
+            this.radioGroupMapper.set(keys.toString(), radioGroup);
+            return radioGroup;
+        }
+        renderCheckboxes(filterKey, options, isParent, keyPrefix) {
+            var _a;
+            const checkboxes = [];
+            for (const opt of options) {
+                const key = `${keyPrefix ? keyPrefix + '|' : ''}${opt.value}`;
+                const subCheckboxes = ((_a = opt.subCheckbox) === null || _a === void 0 ? void 0 : _a.length) ? this.renderCheckboxes(filterKey, opt.subCheckbox, false, key) : [];
+                const checked = this._filter[filterKey] && (this._filter[filterKey].includes(opt.value) || this._filter[filterKey].includes(keyPrefix));
+                const checkbox = (this.$render("i-checkbox", { height: "auto", class: isParent ? '' : 'subcheckbox', caption: opt.label, checked: checked !== null && checked !== void 0 ? checked : false, onChanged: (source, event) => {
+                        const _checkbox = source;
+                        if (isParent)
+                            this.onSelectAll(filterKey, `${filterKey}|${key}`, opt, _checkbox.checked);
+                        else
+                            this.onSelectCheckbox(filterKey, keyPrefix, opt, options, _checkbox.checked);
+                    } }));
+                this.checkboxesMapper.set(`${filterKey}|${key}`, checkbox);
+                checkboxes.push(this.$render("i-vstack", { margin: { left: isParent ? 0 : '1rem' }, stack: { basis: '100%' }, gap: "0.5rem" },
+                    checkbox,
+                    subCheckboxes));
+            }
+            return checkboxes;
+        }
+        init() {
+            super.init();
+            const data = this.getAttribute('data', true);
+            if (data) {
+                this.data = data;
+            }
+            const onFilterChanged = this.getAttribute('onFilterChanged', true);
+            if (onFilterChanged) {
+                this.onFilterChanged = onFilterChanged;
+            }
+        }
+        render() {
+            return (this.$render("i-panel", { id: "pnlFilter", padding: { bottom: '1rem' } }));
+        }
+    };
+    ScomMultiSelectFilter = __decorate([
+        components_2.customModule,
+        components_2.customElements('i-scom-multi-select-filter')
+    ], ScomMultiSelectFilter);
+    exports.default = ScomMultiSelectFilter;
+});
