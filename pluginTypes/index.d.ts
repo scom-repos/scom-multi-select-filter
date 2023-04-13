@@ -60,6 +60,7 @@ declare module "@scom/scom-multi-select-filter" {
     }
     export default class ScomMultiSelectFilter extends Module {
         private pnlFilter;
+        private btnClear;
         private _filter;
         private checkboxesMapper;
         private _data;
@@ -77,6 +78,8 @@ declare module "@scom/scom-multi-select-filter" {
         constructor(parent?: Container, options?: MultiSelectFilterElement);
         private toggle;
         private updateFilters;
+        private clearFilters;
+        private toggleClearButton;
         private renderFilters;
         private renderRadioFilters;
         private renderCustomFields;

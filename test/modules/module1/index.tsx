@@ -117,11 +117,6 @@ export default class Module1 extends Module {
         console.log(filter)
     }
 
-    private onClearFilter() {
-        this.multiSelectFilter1.filter = {};
-        this.multiSelectFilter2.filter = {};
-    }
-
     async init() {
         super.init();
         this.multiSelectFilter2 = await ScomMultiSelectFilter.create({
@@ -135,9 +130,6 @@ export default class Module1 extends Module {
 
     render() {
         return <i-panel>
-            <i-vstack horizontalAlignment="center" maxWidth={700}>
-                <i-button caption="Clear" background={{ color: '#4caf50' }} font={{ color: '#fff' }} onClick={this.onClearFilter} width={100} padding={{ top: 8, bottom: 8 }} />
-            </i-vstack>
             <i-hstack id="hStackMainTest" margin={{ top: 20 }} gap={100} wrap="wrap">
                 <i-scom-multi-select-filter
                     id="multiSelectFilter1"
