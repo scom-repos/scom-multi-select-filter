@@ -10,7 +10,8 @@ import {
   Control,
   Icon,
   Styles,
-  Container
+  Container,
+  Button
 } from '@ijstech/components';
 import {
   ICheckboxFilterData,
@@ -49,6 +50,7 @@ declare global {
 @customElements('i-scom-multi-select-filter')
 export default class ScomMultiSelectFilter extends Module {
   private pnlFilter: Panel;
+  private btnClear: Button;
   private _filter: { [key: string]: string[] } = {};
   private checkboxesMapper: Map<string, Checkbox>;
   private _data: (ICheckboxFilterData | IRadioFilterData)[];
@@ -70,7 +72,7 @@ export default class ScomMultiSelectFilter extends Module {
     this.renderFilters();
   }
 
-  static async create(options?: MultiSelectFilterElement, parent?: Container){
+  static async create(options?: MultiSelectFilterElement, parent?: Container) {
     let self = new this(parent, options);
     await self.ready();
     return self;
@@ -110,6 +112,16 @@ export default class ScomMultiSelectFilter extends Module {
     })
   }
 
+  private clearFilters() {
+    this.filter = {}
+    this.toggleClearButton();
+    if (this.onFilterChanged) this.onFilterChanged(this._filter);
+  }
+
+  private toggleClearButton() {
+    this.btnClear.visible = this._filter && !!Object.values(this._filter).find(item => item.length);
+  }
+
   private renderFilters = () => {
     if (!this.pnlFilter) return;
     this.pnlFilter.clearInnerHTML();
@@ -119,21 +131,55 @@ export default class ScomMultiSelectFilter extends Module {
     this._data.forEach((data) => {
       const filters = data.type === 'checkbox' ?
         this.renderCheckboxFilters(data as ICheckboxFilterData) : this.renderRadioFilters(data as IRadioFilterData);
-      const icon = (<i-icon width={24} height={24} class={data.expanded ? 'rotate-icon' : ''} name="chevron-down" fill={Theme.text.primary} padding={{ top: 6, bottom: 6, left: 6, right: 6 }} />);
+      const icon = (
+        <i-icon
+          position="absolute"
+          right={0}
+          width={24}
+          height={24}
+          class={`${data.expanded ? 'rotate-icon' : ''} pointer icon-filter--chevron`}
+          name="chevron-down"
+          fill={Theme.text.primary}
+          padding={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          onClick={(src: Icon) => this.toggle(filters, src)} 
+        />
+      );
+      const clearButton = (
+        <i-button
+          id="btnClear"
+          caption="Clear"
+          opacity={0.5}
+          padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
+          margin={{ left: 'auto' }}
+          border={{ width: 1, style: 'solid', color: Theme.colors.secondary.light, radius: 4 }}
+          background={{ color: 'transparent' }}
+          font={{ color: Theme.text.primary, size: '0.75rem' }}
+          icon={{ name: 'times-circle', fill: Theme.text.primary, width: 12, height: 12 }}
+          visible={!!Object.keys(this.filter).length}
+          onClick={this.clearFilters.bind(this)}
+        />
+      );
       this.pnlFilter.append(
         <i-panel class={collaspeStyle}>
           <i-hstack
+            position="relative"
             verticalAlignment="center"
             horizontalAlignment="space-between"
-            padding={{ top: '0.5rem', right: '1rem', bottom: '0.5rem', left: '1rem' }}
-            border={{ radius: 5 }}
+            padding={{ top: '0.5rem', right: '2.25rem', bottom: '0.5rem', left: '1rem' }}
+            border={{ radius: 5, bottom: { width: '1px', style: 'solid', color: Theme.text.primary } }}
             gap="8px"
-            class="pointer filter-collapse"
-            onClick={() => this.toggle(filters, icon)}
+            minHeight={41}
+            class="filter-collapse"
           >
             <i-label font={{ bold: true }} caption={data.name} />
+            {clearButton}
             {icon}
           </i-hstack>
+          <i-panel
+            width="calc(100% - 1rem)"
+            margin={{ left: 'auto' }}
+            border={{ bottom: { width: '1px', style: 'solid', color: Theme.divider } }}
+          />
           {filters}
         </i-panel>
       );
@@ -210,6 +256,7 @@ export default class ScomMultiSelectFilter extends Module {
       else
         delete this._filter[_k];
     })
+    this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter)
   }
 
@@ -267,6 +314,7 @@ export default class ScomMultiSelectFilter extends Module {
           delete this._filter[_k];
       })
     }
+    this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
   }
 
@@ -279,9 +327,10 @@ export default class ScomMultiSelectFilter extends Module {
       const checkbox = (
         <i-checkbox
           height="auto"
-          class={isParent ? '' : 'subcheckbox'}
+          class={isParent ? 'parentcheckbox' : 'subcheckbox'}
           caption={opt.label}
           checked={checked ?? false}
+          margin={{ bottom: isParent ? '4px' : '0', left: isParent ? '1rem' : 0 }}
           onChanged={(source: Control, event: Event) => {
             const _checkbox = source as Checkbox;
             if (isParent)
@@ -293,7 +342,7 @@ export default class ScomMultiSelectFilter extends Module {
       );
       this.checkboxesMapper.set(`${filterKey}|${key}`, checkbox)
       checkboxes.push(
-        <i-vstack margin={{ left: isParent ? 0 : '1rem' }} stack={{ basis: '100%' }} gap="0.5rem">
+        <i-vstack margin={{ left: isParent ? 0 : '1rem' }} stack={{ basis: '100%' }} gap="4px">
           {checkbox}
           {subCheckboxes}
         </i-vstack>
@@ -308,9 +357,8 @@ export default class ScomMultiSelectFilter extends Module {
     return (
       <i-vstack
         visible={!!data.expanded}
-        margin={{ top: '1rem', bottom: '1rem' }}
-        padding={{ bottom: '1.5rem' }}
-        border={{ bottom: { width: 1, style: 'solid', color: Theme.divider } }}
+        margin={{ top: '1rem' }}
+        padding={{ bottom: '1rem' }}
         gap="1.25rem"
       >
         {checkboxes}
@@ -349,6 +397,7 @@ export default class ScomMultiSelectFilter extends Module {
     } else if (!checked && index >= 0) {
       this._filter[filterKey].splice(index, 1);
     }
+    this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
   }
 
@@ -383,6 +432,7 @@ export default class ScomMultiSelectFilter extends Module {
         this.checkboxesMapper.get(_mapKey).checked = false;
       }
     }
+    this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
   }
 
