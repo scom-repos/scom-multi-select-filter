@@ -65,6 +65,9 @@ export default class ScomMultiSelectFilter extends Module {
   set filter(data: { [key: string]: string[] }) {
     this._filter = data;
     this.updateFilters();
+    if (this.btnClear) {
+      this.toggleClearButton();
+    }
   }
 
   set data(data: (ICheckboxFilterData | IRadioFilterData)[]) {
