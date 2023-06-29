@@ -113,9 +113,31 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_2.Styles.Theme.ThemeVars;
     let ScomMultiSelectFilter = class ScomMultiSelectFilter extends components_2.Module {
+        get filter() {
+            return this._filter;
+        }
+        set filter(data) {
+            this._filter = data;
+            this.updateFilters();
+            if (this.btnClear) {
+                this.toggleClearButton();
+            }
+        }
+        set data(data) {
+            this._data = data;
+            this.renderFilters();
+        }
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
         constructor(parent, options) {
             super(parent, options);
             this._filter = {};
+            this.checkboxesMapper = new Map();
+            this.radioGroupMapper = new Map();
+            this.customInputMapper = new Map();
             this.updateFilters = () => {
                 [...this.radioGroupMapper.keys()].forEach(_k => {
                     var _a;
@@ -147,9 +169,9 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                 if (!this.pnlFilter)
                     return;
                 this.pnlFilter.clearInnerHTML();
-                this.checkboxesMapper = new Map();
-                this.radioGroupMapper = new Map();
-                this.customInputMapper = new Map();
+                this.checkboxesMapper.clear();
+                this.radioGroupMapper.clear();
+                this.customInputMapper.clear();
                 this._data.forEach((data) => {
                     const filters = data.type === 'checkbox' ?
                         this.renderCheckboxFilters(data) : this.renderRadioFilters(data);
@@ -298,22 +320,6 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     this.onFilterChanged(this._filter);
             };
         }
-        get filter() {
-            return this._filter;
-        }
-        set filter(data) {
-            this._filter = data;
-            this.updateFilters();
-        }
-        set data(data) {
-            this._data = data;
-            this.renderFilters();
-        }
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
-        }
         toggle(container, icon) {
             container.visible = !container.visible;
             icon.classList.toggle('rotate-icon');
@@ -414,7 +420,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
     };
     ScomMultiSelectFilter = __decorate([
         components_2.customModule,
-        components_2.customElements('i-scom-multi-select-filter')
+        (0, components_2.customElements)('i-scom-multi-select-filter')
     ], ScomMultiSelectFilter);
     exports.default = ScomMultiSelectFilter;
 });

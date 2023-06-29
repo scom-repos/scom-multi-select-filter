@@ -62,8 +62,8 @@ declare module "@scom/scom-multi-select-filter" {
         private pnlFilter;
         private btnClear;
         private _filter;
-        private checkboxesMapper;
         private _data;
+        private checkboxesMapper;
         private radioGroupMapper;
         private customInputMapper;
         onFilterChanged: FilterChangedCallback;

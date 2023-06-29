@@ -52,10 +52,10 @@ export default class ScomMultiSelectFilter extends Module {
   private pnlFilter: Panel;
   private btnClear: Button;
   private _filter: { [key: string]: string[] } = {};
-  private checkboxesMapper: Map<string, Checkbox>;
   private _data: (ICheckboxFilterData | IRadioFilterData)[];
-  private radioGroupMapper: Map<string, RadioGroup>;
-  private customInputMapper: Map<string, Input[]>;
+  private checkboxesMapper: Map<string, Checkbox> = new Map();
+  private radioGroupMapper: Map<string, RadioGroup> = new Map();
+  private customInputMapper: Map<string, Input[]> = new Map();
   public onFilterChanged: FilterChangedCallback;
 
   get filter(): { [key: string]: string[] } {
@@ -128,9 +128,9 @@ export default class ScomMultiSelectFilter extends Module {
   private renderFilters = () => {
     if (!this.pnlFilter) return;
     this.pnlFilter.clearInnerHTML();
-    this.checkboxesMapper = new Map();
-    this.radioGroupMapper = new Map();
-    this.customInputMapper = new Map();
+    this.checkboxesMapper.clear();
+    this.radioGroupMapper.clear();
+    this.customInputMapper.clear();
     this._data.forEach((data) => {
       const filters = data.type === 'checkbox' ?
         this.renderCheckboxFilters(data as ICheckboxFilterData) : this.renderRadioFilters(data as IRadioFilterData);
