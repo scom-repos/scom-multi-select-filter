@@ -51,7 +51,8 @@ export const collaspeStyle = Styles.style({
     },
     'i-radio': {
       borderRadius: 5,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      background: Theme.action.hover
     },
     '.i-checkbox_label': {
       padding: 0
@@ -80,7 +81,8 @@ export const collaspeStyle = Styles.style({
     'i-radio input[type="radio"]': {
       width: 20,
       height: 20,
-      margin: 2
+      margin: '0px 2px 2px',
+      cursor: 'pointer'
     },
     '.radio-custom input': {
       width: '100% !important',

@@ -63,7 +63,8 @@ define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@i
             },
             'i-radio': {
                 borderRadius: 5,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                background: Theme.action.hover
             },
             '.i-checkbox_label': {
                 padding: 0
@@ -92,7 +93,8 @@ define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@i
             'i-radio input[type="radio"]': {
                 width: 20,
                 height: 20,
-                margin: 2
+                margin: '0px 2px 2px',
+                cursor: 'pointer'
             },
             '.radio-custom input': {
                 width: '100% !important',
@@ -113,9 +115,31 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_2.Styles.Theme.ThemeVars;
     let ScomMultiSelectFilter = class ScomMultiSelectFilter extends components_2.Module {
+        get filter() {
+            return this._filter;
+        }
+        set filter(data) {
+            this._filter = data;
+            this.updateFilters();
+            if (this.btnClear) {
+                this.toggleClearButton();
+            }
+        }
+        set data(data) {
+            this._data = data;
+            this.renderFilters();
+        }
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
         constructor(parent, options) {
             super(parent, options);
             this._filter = {};
+            this.checkboxesMapper = new Map();
+            this.radioGroupMapper = new Map();
+            this.customInputMapper = new Map();
             this.updateFilters = () => {
                 [...this.radioGroupMapper.keys()].forEach(_k => {
                     var _a;
@@ -147,9 +171,9 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                 if (!this.pnlFilter)
                     return;
                 this.pnlFilter.clearInnerHTML();
-                this.checkboxesMapper = new Map();
-                this.radioGroupMapper = new Map();
-                this.customInputMapper = new Map();
+                this.checkboxesMapper.clear();
+                this.radioGroupMapper.clear();
+                this.customInputMapper.clear();
                 this._data.forEach((data) => {
                     const filters = data.type === 'checkbox' ?
                         this.renderCheckboxFilters(data) : this.renderRadioFilters(data);
@@ -168,7 +192,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                 const options = data.options;
                 const radioGroup = this.renderRadios(data.key, options, data.custom);
                 const customFields = data.custom ? this.renderCustomFields(data, radioGroup) : [];
-                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.divider } }, gap: "0.75rem" },
+                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, gap: "0.75rem" },
                     radioGroup,
                     customFields));
             };
@@ -298,22 +322,6 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     this.onFilterChanged(this._filter);
             };
         }
-        get filter() {
-            return this._filter;
-        }
-        set filter(data) {
-            this._filter = data;
-            this.updateFilters();
-        }
-        set data(data) {
-            this._data = data;
-            this.renderFilters();
-        }
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
-        }
         toggle(container, icon) {
             container.visible = !container.visible;
             icon.classList.toggle('rotate-icon');
@@ -372,7 +380,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     height: 'auto',
                     captionWidth: 'auto'
                 });
-            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
+            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", padding: { left: '1rem' }, radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
             this.radioGroupMapper.set(keys.toString(), radioGroup);
             return radioGroup;
         }
@@ -414,7 +422,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
     };
     ScomMultiSelectFilter = __decorate([
         components_2.customModule,
-        components_2.customElements('i-scom-multi-select-filter')
+        (0, components_2.customElements)('i-scom-multi-select-filter')
     ], ScomMultiSelectFilter);
     exports.default = ScomMultiSelectFilter;
 });
