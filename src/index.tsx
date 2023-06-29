@@ -198,7 +198,6 @@ export default class ScomMultiSelectFilter extends Module {
         visible={!!data.expanded}
         margin={{ top: '1rem', bottom: '1rem' }}
         padding={{ bottom: '1.5rem' }}
-        border={{ bottom: { width: 1, style: 'solid', color: Theme.divider } }}
         gap="0.75rem"
       >
         {radioGroup}
@@ -291,6 +290,7 @@ export default class ScomMultiSelectFilter extends Module {
       <i-radio-group
         width="100%"
         display="flex"
+        padding={{ left: '1rem' }}
         radioItems={items}
         onChanged={(target) => this.onRadioChanged(target as RadioGroup, keys, options)}
         selectedValue={selectedValue}

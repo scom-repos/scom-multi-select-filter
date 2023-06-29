@@ -63,7 +63,8 @@ define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@i
             },
             'i-radio': {
                 borderRadius: 5,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                background: Theme.action.hover
             },
             '.i-checkbox_label': {
                 padding: 0
@@ -92,7 +93,8 @@ define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@i
             'i-radio input[type="radio"]': {
                 width: 20,
                 height: 20,
-                margin: 2
+                margin: '0px 2px 2px',
+                cursor: 'pointer'
             },
             '.radio-custom input': {
                 width: '100% !important',
@@ -190,7 +192,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                 const options = data.options;
                 const radioGroup = this.renderRadios(data.key, options, data.custom);
                 const customFields = data.custom ? this.renderCustomFields(data, radioGroup) : [];
-                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, border: { bottom: { width: 1, style: 'solid', color: Theme.divider } }, gap: "0.75rem" },
+                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem', bottom: '1rem' }, padding: { bottom: '1.5rem' }, gap: "0.75rem" },
                     radioGroup,
                     customFields));
             };
@@ -378,7 +380,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     height: 'auto',
                     captionWidth: 'auto'
                 });
-            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
+            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", padding: { left: '1rem' }, radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
             this.radioGroupMapper.set(keys.toString(), radioGroup);
             return radioGroup;
         }
