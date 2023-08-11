@@ -357,12 +357,13 @@ export default class ScomMultiSelectFilter extends Module {
   private renderCheckboxFilters = (data: ICheckboxFilterData) => {
     const options = data.options as ICheckboxOptions[];
     const checkboxes = this.renderCheckboxes(data.key, options, true);
+    const hasSubCheckbox = options.some(opt => opt.subCheckbox?.length > 0);
     return (
       <i-vstack
         visible={!!data.expanded}
         margin={{ top: '1rem' }}
         padding={{ bottom: '1rem' }}
-        gap="1.25rem"
+        gap={ hasSubCheckbox ? "1.25rem" : "4px" }
       >
         {checkboxes}
       </i-vstack>

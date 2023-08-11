@@ -21,9 +21,6 @@ export const collaspeStyle = Styles.style({
       ...labelStyle,
       padding: '0.5rem'
     },
-    '.parentcheckbox .checkmark': {
-      borderColor: 'rgba(0, 0, 0, 0.25)'
-    },
     '.subcheckbox label.i-checkbox': {
       width: '100%',
       gap: 8,

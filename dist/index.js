@@ -33,9 +33,6 @@ define("@scom/scom-multi-select-filter/index.css.ts", ["require", "exports", "@i
                 // transition: 'transform .2s ease'
             },
             'i-checkbox:not(.subcheckbox) label.i-checkbox': Object.assign(Object.assign({}, labelStyle), { padding: '0.5rem' }),
-            '.parentcheckbox .checkmark': {
-                borderColor: 'rgba(0, 0, 0, 0.25)'
-            },
             '.subcheckbox label.i-checkbox': {
                 width: '100%',
                 gap: 8,
@@ -241,7 +238,8 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
             this.renderCheckboxFilters = (data) => {
                 const options = data.options;
                 const checkboxes = this.renderCheckboxes(data.key, options, true);
-                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem' }, padding: { bottom: '1rem' }, gap: "1.25rem" }, checkboxes));
+                const hasSubCheckbox = options.some(opt => { var _a; return ((_a = opt.subCheckbox) === null || _a === void 0 ? void 0 : _a.length) > 0; });
+                return (this.$render("i-vstack", { visible: !!data.expanded, margin: { top: '1rem' }, padding: { bottom: '1rem' }, gap: hasSubCheckbox ? "1.25rem" : "4px" }, checkboxes));
             };
             this._updateSubFilter = (filterKey, options, selectAll, curValue) => {
                 if (options) {

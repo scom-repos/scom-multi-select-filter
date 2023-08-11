@@ -1,0 +1,8 @@
+{
+    "name": "@scom/scom-multi-select-filter",
+    "type": "widget",
+    "version": "0.1.2",
+    "dependencies": [
+        "@ijstech/components"
+    ]
+}
