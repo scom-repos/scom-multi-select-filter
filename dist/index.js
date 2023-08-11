@@ -139,23 +139,20 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
             this.customInputMapper = new Map();
             this.updateFilters = () => {
                 [...this.radioGroupMapper.keys()].forEach(_k => {
-                    var _a;
-                    const arr = _k.split(',');
+                    var _a, _b, _c;
                     const radioGroup = this.radioGroupMapper.get(_k);
-                    if (this._filter[arr[0]] || this._filter[arr[1]]) {
+                    if (this._filter[_k]) {
                         radioGroup.selectedValue = ((_a = radioGroup.tag) !== null && _a !== void 0 ? _a : []).findIndex((opt) => {
-                            var _a, _b, _c, _d;
-                            const key0Value = arr[0] ? (_a = this._filter[arr[0]]) === null || _a === void 0 ? void 0 : _a[0] : undefined;
-                            const key1Value = arr[1] ? (_b = this._filter[arr[1]]) === null || _b === void 0 ? void 0 : _b[0] : undefined;
-                            return key0Value === ((_c = opt.value) === null || _c === void 0 ? void 0 : _c[0]) && key1Value === ((_d = opt.value) === null || _d === void 0 ? void 0 : _d[1]);
+                            var _a;
+                            return ((_a = this._filter[_k]) === null || _a === void 0 ? void 0 : _a[0]) === opt.value;
                         }).toString();
                     }
                     else {
                         radioGroup.selectedValue = '';
                     }
                     if (this.customInputMapper.has(_k)) {
-                        const inputs = this.customInputMapper.get(_k);
-                        inputs.forEach((input, idx) => { var _a, _b; return input.value = arr[idx] ? (_b = (_a = this._filter[arr[idx]]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : '' : ''; });
+                        const input = this.customInputMapper.get(_k);
+                        input.value = _k ? (_c = (_b = this._filter[_k]) === null || _b === void 0 ? void 0 : _b[0]) !== null && _c !== void 0 ? _c : "" : "";
                     }
                 });
                 this.checkboxesMapper.forEach((checkbox, key) => {
@@ -193,43 +190,32 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     radioGroup,
                     customFields));
             };
-            this.applyCustomRadio = (keys, inputs) => {
-                let hasValue;
-                const inputValue = inputs.map(input => {
-                    if (input.value)
-                        hasValue = true;
-                    return input.value;
-                });
+            this.applyCustomRadio = (key, input) => {
+                let hasValue = !!input.value;
+                const inputValue = input.value;
                 if (!hasValue)
                     return;
-                keys.forEach((_k, i) => {
-                    if (inputValue === null || inputValue === void 0 ? void 0 : inputValue[i])
-                        this._filter[_k] = [inputValue[i]];
-                    else
-                        delete this._filter[_k];
-                });
-                this.toggleClearButton();
+                if (inputValue)
+                    this._filter[key] = [inputValue];
+                else
+                    delete this._filter[key];
+                this.btnClear.visible = true;
                 if (this.onFilterChanged)
                     this.onFilterChanged(this._filter);
             };
-            this.onRadioChanged = (target, keys, options) => {
+            this.onRadioChanged = (target, key, options) => {
                 if (target.selectedValue === '')
                     return;
                 const option = options[target.selectedValue];
                 if (option.isAll) {
-                    keys.forEach(_k => {
-                        if (this._filter[_k])
-                            delete this._filter[_k];
-                    });
+                    if (this._filter[key])
+                        delete this._filter[key];
                 }
                 else {
-                    keys.forEach((_k, i) => {
-                        var _a;
-                        if ((_a = option.value) === null || _a === void 0 ? void 0 : _a[i])
-                            this._filter[_k] = [option.value[i]];
-                        else
-                            delete this._filter[_k];
-                    });
+                    if (option.value)
+                        this._filter[key] = [option.value];
+                    else
+                        delete this._filter[key];
                 }
                 this.toggleClearButton();
                 if (this.onFilterChanged)
@@ -326,7 +312,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
         }
         clearFilters() {
             this.filter = {};
-            this.toggleClearButton();
+            this.btnClear.visible = false;
             if (this.onFilterChanged)
                 this.onFilterChanged(this._filter);
         }
@@ -334,32 +320,24 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
             this.btnClear.visible = this._filter && !!Object.values(this._filter).find(item => item.length);
         }
         renderCustomFields(data, radioGroup) {
-            const inputs = data.key.map((_k, idx) => {
-                var _a, _b, _c, _d;
-                return (this.$render("i-input", { width: "100%", height: 40, border: { radius: 8 }, placeholder: (_b = (_a = data.custom.placeholder) === null || _a === void 0 ? void 0 : _a[idx]) !== null && _b !== void 0 ? _b : '', inputType: data.custom.type, value: radioGroup.selectedValue == '' ? (_d = (_c = this._filter[_k]) === null || _c === void 0 ? void 0 : _c[0]) !== null && _d !== void 0 ? _d : '' : '', onFocus: () => {
-                        if (radioGroup.selectedValue != '')
-                            radioGroup.selectedValue = '';
-                    } }));
-            });
-            this.customInputMapper.set(data.key.toString(), inputs);
-            let controls = [...inputs];
-            if (controls.length > 1) {
-                controls.splice(1, 0, this.$render("i-label", { caption: "to" }));
-            }
+            var _a, _b, _c;
+            const input = (this.$render("i-input", { width: "100%", height: 40, border: { radius: 8 }, placeholder: (_a = data.custom.placeholder) !== null && _a !== void 0 ? _a : '', inputType: data.custom.type, value: radioGroup.selectedValue == '' ? (_c = (_b = this._filter[data.key]) === null || _b === void 0 ? void 0 : _b[0]) !== null && _c !== void 0 ? _c : '' : '', onFocus: () => {
+                    if (radioGroup.selectedValue != '')
+                        radioGroup.selectedValue = '';
+                } }));
+            this.customInputMapper.set(data.key.toString(), input);
             return (this.$render("i-vstack", { class: "radio-custom", gap: "0.75rem", padding: { left: '1rem', right: '1rem' } },
-                this.$render("i-hstack", { gap: "0.5rem", verticalAlignment: "center" }, controls),
+                this.$render("i-hstack", { gap: "0.5rem", verticalAlignment: "center" }, input),
                 this.$render("i-button", { width: "100%", caption: "Apply", font: { color: Theme.colors.primary.contrastText }, padding: { top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }, onClick: () => {
                         if (radioGroup.selectedValue === '')
-                            this.applyCustomRadio(data.key, inputs);
+                            this.applyCustomRadio(data.key, input);
                     } })));
         }
-        renderRadios(keys, options, custom) {
+        renderRadios(key, options, custom) {
             let selectedValue = '';
             const items = options.map((opt, idx) => {
-                var _a, _b, _c, _d;
-                const key0Value = keys[0] ? (_a = this._filter[keys[0]]) === null || _a === void 0 ? void 0 : _a[0] : undefined;
-                const key1Value = keys[1] ? (_b = this._filter[keys[1]]) === null || _b === void 0 ? void 0 : _b[0] : undefined;
-                if (key0Value === ((_c = opt.value) === null || _c === void 0 ? void 0 : _c[0]) && key1Value === ((_d = opt.value) === null || _d === void 0 ? void 0 : _d[1])) {
+                var _a;
+                if (((_a = this._filter[key]) === null || _a === void 0 ? void 0 : _a[0]) === opt.value) {
                     selectedValue = idx.toString();
                 }
                 return {
@@ -378,8 +356,8 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     height: 'auto',
                     captionWidth: 'auto'
                 });
-            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", padding: { left: '1rem' }, radioItems: items, onChanged: (target) => this.onRadioChanged(target, keys, options), selectedValue: selectedValue, tag: options }));
-            this.radioGroupMapper.set(keys.toString(), radioGroup);
+            const radioGroup = (this.$render("i-radio-group", { width: "100%", display: "flex", padding: { left: '1rem' }, radioItems: items, onChanged: (target) => this.onRadioChanged(target, key, options), selectedValue: selectedValue, tag: options }));
+            this.radioGroupMapper.set(key, radioGroup);
             return radioGroup;
         }
         renderCheckboxes(filterKey, options, isParent, keyPrefix) {
