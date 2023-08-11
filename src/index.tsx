@@ -50,12 +50,12 @@ declare global {
 @customElements('i-scom-multi-select-filter')
 export default class ScomMultiSelectFilter extends Module {
   private pnlFilter: Panel;
-  private btnClear: Button;
   private _filter: { [key: string]: string[] } = {};
   private _data: (ICheckboxFilterData | IRadioFilterData)[];
   private checkboxesMapper: Map<string, Checkbox> = new Map();
   private radioGroupMapper: Map<string, RadioGroup> = new Map();
-  private customInputMapper: Map<string, Input[]> = new Map();
+  private customInputMapper: Map<string, Input> = new Map();
+  private clearButtonMapper: Map<string, Button> = new Map();
   public onFilterChanged: FilterChangedCallback;
 
   get filter(): { [key: string]: string[] } {
@@ -65,9 +65,7 @@ export default class ScomMultiSelectFilter extends Module {
   set filter(data: { [key: string]: string[] }) {
     this._filter = data;
     this.updateFilters();
-    if (this.btnClear) {
-      this.toggleClearButton();
-    }
+    this.toggleClearButton();
   }
 
   set data(data: (ICheckboxFilterData | IRadioFilterData)[]) {
@@ -92,20 +90,17 @@ export default class ScomMultiSelectFilter extends Module {
 
   private updateFilters = () => {
     [...this.radioGroupMapper.keys()].forEach(_k => {
-      const arr = _k.split(',');
       const radioGroup = this.radioGroupMapper.get(_k);
-      if (this._filter[arr[0]] || this._filter[arr[1]]) {
+      if (this._filter[_k]) {
         radioGroup.selectedValue = (radioGroup.tag ?? []).findIndex((opt: IRadioOptions) => {
-          const key0Value = arr[0] ? this._filter[arr[0]]?.[0] : undefined;
-          const key1Value = arr[1] ? this._filter[arr[1]]?.[0] : undefined;
-          return key0Value === opt.value?.[0] && key1Value === opt.value?.[1];
+          return this._filter[_k]?.[0] === opt.value;
         }).toString();
       } else {
         radioGroup.selectedValue = '';
       }
       if (this.customInputMapper.has(_k)) {
-        const inputs = this.customInputMapper.get(_k);
-        inputs.forEach((input, idx) => input.value = arr[idx] ? this._filter[arr[idx]]?.[0] ?? '' : '')
+        const input = this.customInputMapper.get(_k);
+        input.value = _k ? this._filter[_k]?.[0] ?? "" : "";
       }
     });
     this.checkboxesMapper.forEach((checkbox, key) => {
@@ -115,14 +110,18 @@ export default class ScomMultiSelectFilter extends Module {
     })
   }
 
-  private clearFilters() {
-    this.filter = {}
-    this.toggleClearButton();
+  private clearFilters(key: string) {
+    const filter = JSON.parse(JSON.stringify(this.filter));
+    if (filter) delete filter[key];
+    this.filter = filter;
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
   }
 
   private toggleClearButton() {
-    this.btnClear.visible = this._filter && !!Object.values(this._filter).find(item => item.length);
+    [...this.clearButtonMapper.keys()].forEach(_k => {
+      const button = this.clearButtonMapper.get(_k);
+      button.visible = this._filter && this._filter[_k]?.length > 0;
+    });
   }
 
   private renderFilters = () => {
@@ -131,6 +130,7 @@ export default class ScomMultiSelectFilter extends Module {
     this.checkboxesMapper.clear();
     this.radioGroupMapper.clear();
     this.customInputMapper.clear();
+    this.clearButtonMapper.clear();
     this._data.forEach((data) => {
       const filters = data.type === 'checkbox' ?
         this.renderCheckboxFilters(data as ICheckboxFilterData) : this.renderRadioFilters(data as IRadioFilterData);
@@ -149,7 +149,6 @@ export default class ScomMultiSelectFilter extends Module {
       );
       const clearButton = (
         <i-button
-          id="btnClear"
           caption="Clear"
           opacity={0.5}
           padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
@@ -159,9 +158,10 @@ export default class ScomMultiSelectFilter extends Module {
           font={{ color: Theme.text.primary, size: '0.75rem' }}
           icon={{ name: 'times-circle', fill: Theme.text.primary, width: 12, height: 12 }}
           visible={!!Object.keys(this.filter).length}
-          onClick={this.clearFilters.bind(this)}
+          onClick={() => this.clearFilters(data.key)}
         />
       );
+      this.clearButtonMapper.set(data.key, clearButton);
       this.pnlFilter.append(
         <i-panel class={collaspeStyle}>
           <i-hstack
@@ -207,29 +207,25 @@ export default class ScomMultiSelectFilter extends Module {
   }
 
   private renderCustomFields(data: IRadioFilterData, radioGroup: RadioGroup) {
-    const inputs: Input[] = data.key.map((_k, idx) => (
+    const input: Input = (
       <i-input
         width="100%"
         height={40}
         border={{ radius: 8 }}
-        placeholder={data.custom.placeholder?.[idx] ?? ''}
+        placeholder={data.custom.placeholder ?? ''}
         inputType={data.custom.type}
-        value={radioGroup.selectedValue == '' ? this._filter[_k]?.[0] ?? '' : ''}
+        value={radioGroup.selectedValue == '' ? this._filter[data.key]?.[0] ?? '' : ''}
         onFocus={() => {
           if (radioGroup.selectedValue != '')
             radioGroup.selectedValue = '';
         }}
       />
-    ))
-    this.customInputMapper.set(data.key.toString(), inputs);
-    let controls: Control[] = [...inputs];
-    if (controls.length > 1) {
-      controls.splice(1, 0, <i-label caption="to" />);
-    }
+    )
+    this.customInputMapper.set(data.key.toString(), input);
     return (
       <i-vstack class="radio-custom" gap="0.75rem" padding={{ left: '1rem', right: '1rem' }}>
         <i-hstack gap="0.5rem" verticalAlignment="center">
-          {controls}
+          {input}
         </i-hstack>
         <i-button
           width="100%"
@@ -238,36 +234,30 @@ export default class ScomMultiSelectFilter extends Module {
           padding={{ top: '1rem', bottom: '1rem', left: '1rem', right: '1rem' }}
           onClick={() => {
             if (radioGroup.selectedValue === '')
-              this.applyCustomRadio(data.key, inputs)
+              this.applyCustomRadio(data.key, input)
           }}
         />
       </i-vstack>
     )
   }
 
-  private applyCustomRadio = (keys: [string?, string?], inputs: Input[]) => {
-    let hasValue: boolean;
-    const inputValue = inputs.map(input => {
-      if (input.value) hasValue = true;
-      return input.value
-    });
-    if (!hasValue) return;
-    keys.forEach((_k, i) => {
-      if (inputValue?.[i])
-        this._filter[_k] = [inputValue[i]];
-      else
-        delete this._filter[_k];
-    })
+  private applyCustomRadio = (key: string, input: Input) => {
+    const inputValue = input.value;
+    if (!inputValue) {
+      return;
+    }
+    if (inputValue)
+      this._filter[key] = [inputValue];
+    else
+      delete this._filter[key];
     this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter)
   }
 
-  private renderRadios(keys: [string?, string?], options: IRadioOptions[], custom?: ICustomRadio) {
+  private renderRadios(key: string, options: IRadioOptions[], custom?: ICustomRadio) {
     let selectedValue: string | undefined = '';
     const items: RadioItem[] = options.map((opt, idx) => {
-      const key0Value = keys[0] ? this._filter[keys[0]]?.[0] : undefined;
-      const key1Value = keys[1] ? this._filter[keys[1]]?.[0] : undefined;
-      if (key0Value === opt.value?.[0] && key1Value === opt.value?.[1]) {
+      if (this._filter[key]?.[0] === opt.value) {
         selectedValue = idx.toString();
       }
       return {
@@ -292,30 +282,26 @@ export default class ScomMultiSelectFilter extends Module {
         display="flex"
         padding={{ left: '1rem' }}
         radioItems={items}
-        onChanged={(target) => this.onRadioChanged(target as RadioGroup, keys, options)}
+        onChanged={(target) => this.onRadioChanged(target as RadioGroup, key, options)}
         selectedValue={selectedValue}
         tag={options}
       />
     );
-    this.radioGroupMapper.set(keys.toString(), radioGroup);
+    this.radioGroupMapper.set(key, radioGroup);
     return radioGroup;
   }
 
-  private onRadioChanged = (target: RadioGroup, keys: string[], options: IRadioOptions[]) => {
+  private onRadioChanged = (target: RadioGroup, key: string, options: IRadioOptions[]) => {
     if (target.selectedValue === '') return;
     const option: IRadioOptions = options[target.selectedValue];
     if (option.isAll) {
-      keys.forEach(_k => {
-        if (this._filter[_k])
-          delete this._filter[_k];
-      })
+      if (this._filter[key])
+        delete this._filter[key];
     } else {
-      keys.forEach((_k, i) => {
-        if (option.value?.[i])
-          this._filter[_k] = [option.value[i]];
-        else
-          delete this._filter[_k];
-      })
+      if (option.value)
+        this._filter[key] = [option.value];
+      else
+        delete this._filter[key];
     }
     this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
@@ -357,12 +343,13 @@ export default class ScomMultiSelectFilter extends Module {
   private renderCheckboxFilters = (data: ICheckboxFilterData) => {
     const options = data.options as ICheckboxOptions[];
     const checkboxes = this.renderCheckboxes(data.key, options, true);
+    const hasSubCheckbox = options.some(opt => opt.subCheckbox?.length > 0);
     return (
       <i-vstack
         visible={!!data.expanded}
         margin={{ top: '1rem' }}
         padding={{ bottom: '1rem' }}
-        gap="1.25rem"
+        gap={ hasSubCheckbox ? "1.25rem" : "4px" }
       >
         {checkboxes}
       </i-vstack>

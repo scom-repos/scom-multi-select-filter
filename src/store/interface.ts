@@ -5,7 +5,7 @@ export interface IOptions {
 
 export interface IRadioOptions {
   label: string;
-  value?: [string?, string?];
+  value?: string;
   isAll?: boolean;
 }
 
@@ -26,11 +26,10 @@ export interface ICheckboxFilterData extends IFilterData {
 
 export interface ICustomRadio {
   type: 'number' | 'text',
-  placeholder?: [string?, string?];
+  placeholder?: string;
 }
 
 export interface IRadioFilterData extends IFilterData {
-  key: [string?, string?];
-  tag: [string?, string?];
+  key: string;
   custom?: ICustomRadio;
 }

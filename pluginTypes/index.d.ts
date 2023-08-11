@@ -6,7 +6,7 @@ declare module "@scom/scom-multi-select-filter/store/interface.ts" {
     }
     export interface IRadioOptions {
         label: string;
-        value?: [string?, string?];
+        value?: string;
         isAll?: boolean;
     }
     export interface ICheckboxOptions extends IOptions {
@@ -23,11 +23,10 @@ declare module "@scom/scom-multi-select-filter/store/interface.ts" {
     }
     export interface ICustomRadio {
         type: 'number' | 'text';
-        placeholder?: [string?, string?];
+        placeholder?: string;
     }
     export interface IRadioFilterData extends IFilterData {
-        key: [string?, string?];
-        tag: [string?, string?];
+        key: string;
         custom?: ICustomRadio;
     }
 }
@@ -60,12 +59,12 @@ declare module "@scom/scom-multi-select-filter" {
     }
     export default class ScomMultiSelectFilter extends Module {
         private pnlFilter;
-        private btnClear;
         private _filter;
         private _data;
         private checkboxesMapper;
         private radioGroupMapper;
         private customInputMapper;
+        private clearButtonMapper;
         onFilterChanged: FilterChangedCallback;
         get filter(): {
             [key: string]: string[];
