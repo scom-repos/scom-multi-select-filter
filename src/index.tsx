@@ -50,12 +50,12 @@ declare global {
 @customElements('i-scom-multi-select-filter')
 export default class ScomMultiSelectFilter extends Module {
   private pnlFilter: Panel;
-  private btnClear: Button;
   private _filter: { [key: string]: string[] } = {};
   private _data: (ICheckboxFilterData | IRadioFilterData)[];
   private checkboxesMapper: Map<string, Checkbox> = new Map();
   private radioGroupMapper: Map<string, RadioGroup> = new Map();
   private customInputMapper: Map<string, Input> = new Map();
+  private clearButtonMapper: Map<string, Button> = new Map();
   public onFilterChanged: FilterChangedCallback;
 
   get filter(): { [key: string]: string[] } {
@@ -65,9 +65,7 @@ export default class ScomMultiSelectFilter extends Module {
   set filter(data: { [key: string]: string[] }) {
     this._filter = data;
     this.updateFilters();
-    if (this.btnClear) {
-      this.toggleClearButton();
-    }
+    this.toggleClearButton();
   }
 
   set data(data: (ICheckboxFilterData | IRadioFilterData)[]) {
@@ -112,14 +110,18 @@ export default class ScomMultiSelectFilter extends Module {
     })
   }
 
-  private clearFilters() {
-    this.filter = {}
-    this.btnClear.visible = false;
+  private clearFilters(key: string) {
+    const filter = JSON.parse(JSON.stringify(this.filter));
+    if (filter) delete filter[key];
+    this.filter = filter;
     if (this.onFilterChanged) this.onFilterChanged(this._filter);
   }
 
   private toggleClearButton() {
-    this.btnClear.visible = this._filter && !!Object.values(this._filter).find(item => item.length);
+    [...this.clearButtonMapper.keys()].forEach(_k => {
+      const button = this.clearButtonMapper.get(_k);
+      button.visible = this._filter && this._filter[_k]?.length > 0;
+    });
   }
 
   private renderFilters = () => {
@@ -128,6 +130,7 @@ export default class ScomMultiSelectFilter extends Module {
     this.checkboxesMapper.clear();
     this.radioGroupMapper.clear();
     this.customInputMapper.clear();
+    this.clearButtonMapper.clear();
     this._data.forEach((data) => {
       const filters = data.type === 'checkbox' ?
         this.renderCheckboxFilters(data as ICheckboxFilterData) : this.renderRadioFilters(data as IRadioFilterData);
@@ -146,7 +149,6 @@ export default class ScomMultiSelectFilter extends Module {
       );
       const clearButton = (
         <i-button
-          id="btnClear"
           caption="Clear"
           opacity={0.5}
           padding={{ top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }}
@@ -156,9 +158,10 @@ export default class ScomMultiSelectFilter extends Module {
           font={{ color: Theme.text.primary, size: '0.75rem' }}
           icon={{ name: 'times-circle', fill: Theme.text.primary, width: 12, height: 12 }}
           visible={!!Object.keys(this.filter).length}
-          onClick={this.clearFilters.bind(this)}
+          onClick={() => this.clearFilters(data.key)}
         />
       );
+      this.clearButtonMapper.set(data.key, clearButton);
       this.pnlFilter.append(
         <i-panel class={collaspeStyle}>
           <i-hstack
@@ -239,14 +242,15 @@ export default class ScomMultiSelectFilter extends Module {
   }
 
   private applyCustomRadio = (key: string, input: Input) => {
-    let hasValue: boolean = !!input.value;
     const inputValue = input.value;
-    if (!hasValue) return;
+    if (!inputValue) {
+      return;
+    }
     if (inputValue)
       this._filter[key] = [inputValue];
     else
       delete this._filter[key];
-    this.btnClear.visible = true;
+    this.toggleClearButton();
     if (this.onFilterChanged) this.onFilterChanged(this._filter)
   }
 

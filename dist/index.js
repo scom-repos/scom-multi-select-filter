@@ -118,9 +118,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
         set filter(data) {
             this._filter = data;
             this.updateFilters();
-            if (this.btnClear) {
-                this.toggleClearButton();
-            }
+            this.toggleClearButton();
         }
         set data(data) {
             this._data = data;
@@ -137,6 +135,7 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
             this.checkboxesMapper = new Map();
             this.radioGroupMapper = new Map();
             this.customInputMapper = new Map();
+            this.clearButtonMapper = new Map();
             this.updateFilters = () => {
                 [...this.radioGroupMapper.keys()].forEach(_k => {
                     var _a, _b, _c;
@@ -168,11 +167,13 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                 this.checkboxesMapper.clear();
                 this.radioGroupMapper.clear();
                 this.customInputMapper.clear();
+                this.clearButtonMapper.clear();
                 this._data.forEach((data) => {
                     const filters = data.type === 'checkbox' ?
                         this.renderCheckboxFilters(data) : this.renderRadioFilters(data);
                     const icon = (this.$render("i-icon", { position: "absolute", right: 0, width: 24, height: 24, class: `${data.expanded ? 'rotate-icon' : ''} pointer icon-filter--chevron`, name: "chevron-down", fill: Theme.text.primary, padding: { top: 6, bottom: 6, left: 6, right: 6 }, onClick: (src) => this.toggle(filters, src) }));
-                    const clearButton = (this.$render("i-button", { id: "btnClear", caption: "Clear", opacity: 0.5, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, margin: { left: 'auto' }, border: { width: 1, style: 'solid', color: Theme.colors.secondary.light, radius: 4 }, background: { color: 'transparent' }, font: { color: Theme.text.primary, size: '0.75rem' }, icon: { name: 'times-circle', fill: Theme.text.primary, width: 12, height: 12 }, visible: !!Object.keys(this.filter).length, onClick: this.clearFilters.bind(this) }));
+                    const clearButton = (this.$render("i-button", { caption: "Clear", opacity: 0.5, padding: { top: '0.25rem', bottom: '0.25rem', left: '0.5rem', right: '0.5rem' }, margin: { left: 'auto' }, border: { width: 1, style: 'solid', color: Theme.colors.secondary.light, radius: 4 }, background: { color: 'transparent' }, font: { color: Theme.text.primary, size: '0.75rem' }, icon: { name: 'times-circle', fill: Theme.text.primary, width: 12, height: 12 }, visible: !!Object.keys(this.filter).length, onClick: () => this.clearFilters(data.key) }));
+                    this.clearButtonMapper.set(data.key, clearButton);
                     this.pnlFilter.append(this.$render("i-panel", { class: index_css_1.collaspeStyle },
                         this.$render("i-hstack", { position: "relative", verticalAlignment: "center", horizontalAlignment: "space-between", padding: { top: '0.5rem', right: '2.25rem', bottom: '0.5rem', left: '1rem' }, border: { radius: 5, bottom: { width: '1px', style: 'solid', color: Theme.text.primary } }, gap: "8px", minHeight: 41, class: "filter-collapse" },
                             this.$render("i-label", { font: { bold: true }, caption: data.name }),
@@ -191,15 +192,15 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
                     customFields));
             };
             this.applyCustomRadio = (key, input) => {
-                let hasValue = !!input.value;
                 const inputValue = input.value;
-                if (!hasValue)
+                if (!inputValue) {
                     return;
+                }
                 if (inputValue)
                     this._filter[key] = [inputValue];
                 else
                     delete this._filter[key];
-                this.btnClear.visible = true;
+                this.toggleClearButton();
                 if (this.onFilterChanged)
                     this.onFilterChanged(this._filter);
             };
@@ -310,14 +311,20 @@ define("@scom/scom-multi-select-filter", ["require", "exports", "@ijstech/compon
             container.visible = !container.visible;
             icon.classList.toggle('rotate-icon');
         }
-        clearFilters() {
-            this.filter = {};
-            this.btnClear.visible = false;
+        clearFilters(key) {
+            const filter = JSON.parse(JSON.stringify(this.filter));
+            if (filter)
+                delete filter[key];
+            this.filter = filter;
             if (this.onFilterChanged)
                 this.onFilterChanged(this._filter);
         }
         toggleClearButton() {
-            this.btnClear.visible = this._filter && !!Object.values(this._filter).find(item => item.length);
+            [...this.clearButtonMapper.keys()].forEach(_k => {
+                var _a;
+                const button = this.clearButtonMapper.get(_k);
+                button.visible = this._filter && ((_a = this._filter[_k]) === null || _a === void 0 ? void 0 : _a.length) > 0;
+            });
         }
         renderCustomFields(data, radioGroup) {
             var _a, _b, _c;

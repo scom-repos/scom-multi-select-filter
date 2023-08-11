@@ -1,5 +1,5 @@
 import { Module, customModule, Container, HStack } from '@ijstech/components';
-import ScomMultiSelectFilter, { ICheckboxFilterData } from '@scom/scom-multi-select-filter'
+import ScomMultiSelectFilter, { ICheckboxFilterData, IRadioFilterData } from '@scom/scom-multi-select-filter'
 
 const microDapps: ICheckboxFilterData[] = [
     {
@@ -103,6 +103,64 @@ const tokens: ICheckboxFilterData[] = [
     }
 ];
 
+const widgets: ICheckboxFilterData[] = [
+    {
+        name: "Type",
+        key: "categories",
+        type: "checkbox",
+        expanded: true,
+        options: [
+            {
+                label: "Swaps",
+                value: "swap",
+            }
+        ]
+    },
+    {
+        name: "Status",
+        key: "status",
+        type: "checkbox",
+        expanded: true,
+        options: [
+            {
+                label: "Published",
+                value: "published"
+            },
+            {
+                label: "Active",
+                value: "active"
+            },
+            {
+                label: "Inactive",
+                value: "inactive"
+            }
+        ]
+    }
+]
+
+const radioFilters: IRadioFilterData[] = [
+    {
+        name: "Status",
+        key: "status",
+        type: "radio",
+        expanded: true,
+        options: [
+            {
+                label: "All",
+                isAll: true
+            },
+            {
+                label: "Active",
+                value: "active",
+            },
+            {
+                label: "Resolved",
+                value: "resolved"
+            }
+        ]
+    }
+]
+
 @customModule
 export default class Module1 extends Module {
     private multiSelectFilter1: ScomMultiSelectFilter;
@@ -136,6 +194,20 @@ export default class Module1 extends Module {
                     width={300}
                     maxWidth="100%"
                     data={microDapps}
+                    onFilterChanged={this.onFilterChanged.bind(this)}
+                    overflow="auto"
+                />
+                <i-scom-multi-select-filter
+                    width={300}
+                    maxWidth="100%"
+                    data={widgets}
+                    onFilterChanged={this.onFilterChanged.bind(this)}
+                    overflow="auto"
+                />
+                <i-scom-multi-select-filter
+                    width={300}
+                    maxWidth="100%"
+                    data={radioFilters}
                     onFilterChanged={this.onFilterChanged.bind(this)}
                     overflow="auto"
                 />

@@ -59,12 +59,12 @@ declare module "@scom/scom-multi-select-filter" {
     }
     export default class ScomMultiSelectFilter extends Module {
         private pnlFilter;
-        private btnClear;
         private _filter;
         private _data;
         private checkboxesMapper;
         private radioGroupMapper;
         private customInputMapper;
+        private clearButtonMapper;
         onFilterChanged: FilterChangedCallback;
         get filter(): {
             [key: string]: string[];
